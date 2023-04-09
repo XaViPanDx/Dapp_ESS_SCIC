@@ -1,6 +1,6 @@
 import React from 'react';
 import { EthProvider } from "./contexts/EthContext";
-import { BrowserRouter as Router, Route, Link, Outlet, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Outlet, Routes } from 'react-router-dom'; //Link
 
 import HomePage from './components/HomePage/HomePage';
 import CreateYourDao from './components/CreateYourDao/CreateYourDao';
@@ -19,8 +19,8 @@ function App() {
   const [daoMemberName, setDaoMemberName] = useState("");
   const [daoMemberAddress, setDaoMemberAddress] = useState("");
 
-  const [nftAddress, setNftAddress] = useState([]);
-  const [votingAddress, setVotingAddress] = useState([]);
+  //const [nftAddress, setNftAddress] = useState([]);
+  //const [votingAddress, setVotingAddress] = useState([]);
 
 
   return (

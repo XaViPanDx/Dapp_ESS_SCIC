@@ -14,13 +14,13 @@ const Header = () => {
     }
   }, [accounts]);
 
-    const handleAccountsChanged = (newAccounts) => {
+    /*const handleAccountsChanged = (newAccounts) => {
       if (newAccounts.length === 0) {
         setAddress('Non connecté');
       } else {
         setAddress(newAccounts[0]);
       }
-    };
+    };*/
 
   return (
   <>
