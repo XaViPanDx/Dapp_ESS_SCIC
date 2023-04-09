@@ -8,7 +8,7 @@ import { useEth } from "../../contexts/EthContext";
 const CreateYourDao = ({daoAddress, setDaoAddress, daoName, setDaoName}) => { // daoAddress ok!!!!
 
   const {
-    state: { accounts, contract, artifact, web3, txhash },
+    state: { accounts, contract, web3, txhash }, //artifact
   } = useEth();
 
   //const [daoName, setDaoName] = useState("");
@@ -18,6 +18,10 @@ const CreateYourDao = ({daoAddress, setDaoAddress, daoName, setDaoName}) => { //
   const handleSubmit = async () => {
     if (daoName=== "") {
       alert("Veuillez entrer un nom");
+      return;
+    }
+    if (!contract) {
+      alert("Le contrat n'est pas encore initialisé");
       return;
     }
     await contract.methods.createDao(daoName).send({ from: accounts[0] });
@@ -48,7 +52,7 @@ const CreateYourDao = ({daoAddress, setDaoAddress, daoName, setDaoName}) => { //
       setOldEvents(oldies);
       //setDaoAddress(oldies);
   
-      const subscription = contract.events.DaoCreated({ fromBlock })
+      /*const subscription = contract.events.DaoCreated({ fromBlock })
         .on("data", (event) => {
           let lesevents = event.returnValues.daoAddress;
           setEventValue(lesevents);
@@ -56,11 +60,23 @@ const CreateYourDao = ({daoAddress, setDaoAddress, daoName, setDaoName}) => { //
         })
         .on("changed", (changed) => console.log(changed))
         .on("error", (err) => console.log(err))
-        .on("connected", (str) => console.log(str));
-  
+        .on("connected", (str) => console.log(str));*/
+        const subscription = contract.events.DaoCreated({ fromBlock })
+  .on("data", (event) => {
+    let lesevents = event.returnValues.daoAddress;
+    if (!oldEvents.includes(lesevents)) {
+      setEventValue(lesevents);
+      setDaoAddress(lesevents);
+      console.log(lesevents); // Remplacez cette ligne par celle qui imprime les adresses
+    }
+  })
+  .on("changed", (changed) => console.log(changed))
+  .on("error", (err) => console.log(err))
+  .on("connected", (str) => console.log(str));
+
       return () => subscription.unsubscribe(); // PAS OBLIGE
     })();
-  }, [contract, web3.eth, txhash, setDaoAddress]); // test dep vide? changements non visibles //
+  }, [contract, web3.eth, txhash, setDaoAddress, setEventValue]); // test dep vide? changements non visibles //
   
 
 
@@ -85,8 +101,8 @@ const CreateYourDao = ({daoAddress, setDaoAddress, daoName, setDaoName}) => { //
           size="md"
           mt={7}
           onClick={handleSubmit}
-        >
-          Créer une nouvelle DAO
+        > 
+        Créer une nouvelle DAO
         </Button>
       </Box>
     </div>
