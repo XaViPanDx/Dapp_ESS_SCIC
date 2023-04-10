@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { useEth } from "../../contexts/EthContext";
 
 const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMemberAddress, 
-  setDaoMemberAddress, removeMemberAddres, setRemoveMemberAddress, result, setResult,
+  setDaoMemberAddress, removeMemberAddress, setRemoveMemberAddress, result, setResult,
 startDate, setStartDate, endDate, setEndDate}) => {
 
   const {
@@ -16,7 +16,10 @@ startDate, setStartDate, endDate, setEndDate}) => {
   //const [isOwner, setIsOwner] = useState(false);
   //const [inputValue, setInputValue] = useState("");
   const [addedMembers, setAddedMembers] = useState([]);
+  const [removedMembers, setRemovedMembers] = useState([]);
   const [snapshot, setSnapshot] = useState([]);
+  const [removedMembersList, setRemovedMembersList] = useState([]);
+
 
 
   //snapshotResults:
@@ -88,22 +91,60 @@ startDate, setStartDate, endDate, setEndDate}) => {
   
     return () => subscription.unsubscribe();
   }, [newDaoInstance, setAddedMembers]);
-  
-  /*const removeMember = async () => {
-    try {
-      const result = await newDaoInstance.methods.removeMember(daoMemberAddress).send({from: accounts[0]});
-      console.log('Membre retiré:', result);
-      // Mettez à jour l'état des membres ajoutés ou effectuez d'autres actions après avoir retiré un membre
-    } catch (error) {
-      console.error('Erreur lors du retrait du membre:', error);
-    }
-  };*/
-  
 
   /*const handleChange = (evt) => {
     setDaoMemberAddress(evt.currentTarget.value);
     setDaoMemberName(evt.currentTarget.value);
   };*/
+
+  const removeMember = async () => {
+    try {
+      await newDaoInstance.methods.removeMember(removedMembers).send({from: accounts[0]}); //const result = 
+      //console.log('Membre retiré:', result);
+      alert('Membre retiré avec succès !');
+      // Mettez à jour l'état des membres ajoutés ou effectuez d'autres actions après avoir retiré un membre
+    } catch (error) {
+      console.error('Erreur lors du retrait du membre:', error);
+    }
+  };
+  
+  useEffect(() => {
+    if (!newDaoInstance) return;
+  
+    async function fetchPastEvents() {
+      const pastEvents = await newDaoInstance.getPastEvents('MemberRemoved', {
+        fromBlock: 0,
+        toBlock: 'latest',
+      });
+  
+      const pastRemovedMembers = pastEvents.map(event => {
+        return {
+          address: event.returnValues.memberAddress,
+        };
+      });
+  
+      setRemovedMembersList(pastRemovedMembers);
+    }
+  
+    fetchPastEvents();
+  
+    const subscription = newDaoInstance.events.MemberRemoved()
+      .on('data', (event) => {
+        const removedMember = {
+          address: event.returnValues.memberAddress,
+        };
+  
+        setRemovedMembersList((prevRemovedMembers) => [...prevRemovedMembers, removedMember]);
+      })
+      .on('changed', (changed) => console.log(changed))
+      .on('error', (err) => console.log(err))
+      .on('connected', (str) => console.log(str));
+  
+    return () => subscription.unsubscribe();
+  }, [newDaoInstance, setRemovedMembersList]);
+  
+
+  
 
   // snapshotResult
 
@@ -147,7 +188,7 @@ startDate, setStartDate, endDate, setEndDate}) => {
           endDate: event.returnValues.endDate,
         };
   
-        setAddedMembers((prevResult) => [...prevResult, newResult]);
+        setAddedMembers((prevResult) => [...prevResult, newResult]); //setDaoMembers?
       })
       .on('changed', (changed) => console.log(changed))
       .on('error', (err) => console.log(err))
@@ -199,7 +240,26 @@ startDate, setStartDate, endDate, setEndDate}) => {
         Membre {index + 1}: {member.name} ({member.address})
       </Text>
     ))}
-  </Box>
+    <Text fontSize="2xl" color="red.700" mb={4} mt={8}>Retirer un membre :</Text>
+          <VStack spacing={4} alignItems="flex-start">
+            <input
+              type="text"
+              placeholder="Adresse du membre"
+              value={removedMembers}
+              onChange={(e) => setRemovedMembers(e.target.value)}
+              width="30"
+            />
+          </VStack>
+          <Button colorScheme="red" type="submit" mt={7} onClick={removeMember}>Retirer un membre</Button>
+          <Text color="red.500" fontWeight="bold" mt={5}>
+            Liste des membres retirés :
+          </Text>
+          {removedMembersList.map((member, index) => (
+            <Text color="red.500" key={index} mt={2} ml={3}>
+              Membre retiré {index + 1}: {member.address}
+            </Text>
+          ))}
+    </Box>
     
       <Box mt={7} ml={16}>
         <Text fontSize="2xl" color="green.700" mb={4}>Résultats du snapshot :</Text>
