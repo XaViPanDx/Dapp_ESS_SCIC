@@ -7,26 +7,28 @@ import { useState, useEffect } from "react";
 import { useEth } from "../../contexts/EthContext";
 
 const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMemberAddress, 
-  setDaoMemberAddress, removeMemberAddress, setRemoveMemberAddress, result, setResult,
-startDate, setStartDate, endDate, setEndDate}) => {
+  setDaoMemberAddress, result, setResult, startDate, setStartDate, endDate, setEndDate, tokenAddress, setTokenAddress }) => { //tokenAddress, setTokenAddress removeMemberAddress, setRemoveMemberAddress,
 
   const {
-    state: { accounts, contract2 }, //contract, artifact, artifact2
+    state: { accounts, contract2, txhash, web3,  }, //contract, artifact, artifact2, contract3, contract4
   } = useEth();
   //const [isOwner, setIsOwner] = useState(false);
   //const [inputValue, setInputValue] = useState("");
+
+  // MEMBERS & SNAPSHOT 
+
   const [addedMembers, setAddedMembers] = useState([]);
   const [removedMembers, setRemovedMembers] = useState([]);
   const [snapshot, setSnapshot] = useState([]);
   const [removedMembersList, setRemovedMembersList] = useState([]);
 
+  // TOKEN
 
-
-  //snapshotResults:
-  //const [result, setResult] = useState('');
-  //const [startDate, setStartDate] = useState('');
-  //const [endDate, setEndDate] = useState('');
-
+  const [tokenName, setTokenName] = useState('');
+  const [tokenSymbol, setTokenSymbol] = useState('');
+  const [createdTokens, setCreatedTokens] = useState([]);
+  
+  // CONTRAT NEWDAO
 
   const newDaoInstance = contract2.clone();
   newDaoInstance.options.address = daoAddress;
@@ -97,12 +99,12 @@ startDate, setStartDate, endDate, setEndDate}) => {
     setDaoMemberName(evt.currentTarget.value);
   };*/
 
+  // REMOVE MEMBER
+
   const removeMember = async () => {
     try {
       await newDaoInstance.methods.removeMember(removedMembers).send({from: accounts[0]}); //const result = 
-      //console.log('Membre retiré:', result);
       alert('Membre retiré avec succès !');
-      // Mettez à jour l'état des membres ajoutés ou effectuez d'autres actions après avoir retiré un membre
     } catch (error) {
       console.error('Erreur lors du retrait du membre:', error);
     }
@@ -144,9 +146,7 @@ startDate, setStartDate, endDate, setEndDate}) => {
   }, [newDaoInstance, setRemovedMembersList]);
   
 
-  
-
-  // snapshotResult
+  // SNAPSHOTRESULT
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -197,7 +197,79 @@ startDate, setStartDate, endDate, setEndDate}) => {
     return () => subscription.unsubscribe();
   }, [newDaoInstance, setSnapshot]);
   
+  // SETTOKEN
 
+  async function createToken() {
+    if (!tokenName || !tokenSymbol) {
+      alert('Veuillez renseigner le nom et le symbole du token.');
+      return;
+    }
+
+    try {
+      /*const newTokenInstance = contract3.clone();
+      newTokenInstance.options.address = tokenAddress;*/
+
+      await newDaoInstance.methods.createToken(tokenName, tokenSymbol).send({ from: accounts[0] });
+
+      alert('Token créé avec succès !');
+    } catch (error) {
+      console.error('Erreur lors de la création du token : ', error);
+    }
+  }
+
+  useEffect(() => {
+    if (!newDaoInstance) return;
+
+    const deployTx =  web3.eth.getTransaction(txhash);
+      const fromBlock = deployTx ? deployTx.blockNumber : "earliest";
+
+    async function fetchEvents() {
+      try {
+        const pastEvents = await newDaoInstance.getPastEvents('TokenCreated', {
+          fromBlock: 0,
+          toBlock: 'latest',
+        });
+
+        const pastTokenCreated = pastEvents.map(event => {
+          return {
+            address: event.returnValues.tokenAddress,
+            name: event.returnValues.tokenName,
+            symbol: event.returnValues.tokenSymbol,
+          };
+        });
+
+        await newDaoInstance.events.TokenCreated({ fromBlock })
+        .on("data", (event) => {
+        let tokenEventAddress = event.returnValues.tokenAddress;
+        setTokenAddress(tokenEventAddress);
+        console.log(tokenEventAddress);
+        })
+        .on("changed", (changed) => console.log(changed))
+        .on("error", (err) => console.log(err))
+        .on("connected", (str) => console.log(str));
+
+        setCreatedTokens(pastTokenCreated);
+        
+      } catch (error) {
+        console.error('Erreur lors de la récupération des événements : ', error);
+      }
+    }
+
+    fetchEvents();
+  },[newDaoInstance, setTokenAddress, txhash, web3.eth] ); // OU vIDE?? , setTokenAddress
+
+
+ // SETVOTING
+
+  
+
+
+
+  
+  
+
+
+  
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
@@ -312,8 +384,44 @@ startDate, setStartDate, endDate, setEndDate}) => {
           </Text>
           ))}
         </form>
+        <Text mb={3}>Nom du token :</Text>
+      <Input
+        value={tokenName}
+        onChange={e => setTokenName(e.target.value)}
+        placeholder="Entrez le nom du token"
+        size="md"
+        mb={3}
+      />
+
+      <Text mb={3}>Symbole du token :</Text>
+      <Input
+        value={tokenSymbol}
+        onChange={e => setTokenSymbol(e.target.value)}
+        placeholder="Entrez le symbole du token"
+        size="md"
+        mb={3}
+      />
+
+      <Button colorScheme="teal" onClick={createToken}>
+        Créer un token
+      </Button>
+
+      <Text color="teal.500" fontWeight="bold" mt={5}>
+        Liste des tokens créés :
+      </Text>
+      {createdTokens.map((token, index) => (
+        <Text color="teal.500" key={index} mt={2} ml={3}>
+          Token {index + 1}: {tokenName} ({tokenSymbol}) - Adresse : {token.address} 
+        </Text>
+      ))}
+      {tokenAddress && (
+  <Text color="teal.500" fontWeight="bold" mt={5} ml={7}>
+    Adresse du token : {tokenAddress}
+  </Text>
+)}
       </Box>
     </Flex>
+   
   </div>
     
   
@@ -321,7 +429,7 @@ startDate, setStartDate, endDate, setEndDate}) => {
   );
 };
 
-export default YourDao;
+export default YourDao; 
 
 // DERNIERS CHANGEMENTS
 

@@ -22,6 +22,7 @@ function App() {
   const [result, setResult] = useState([]);
   const [startDate, setStartDate] = useState([]);
   const [endDate, setEndDate] = useState([]);
+  const [tokenAddress, setTokenAddress] = useState([]);
 
   //const [nftAddress, setNftAddress] = useState([]);
   //const [votingAddress, setVotingAddress] = useState([]);
@@ -43,7 +44,8 @@ function App() {
                     <Route path="/your-dao" element={<YourDao daoAddress={daoAddress} daoName={daoName} daoMemberName={daoMemberName}
                     setDaoMemberName={setDaoMemberName} daoMemberAddress={daoMemberAddress} setDaoMemberAddress={setDaoMemberAddress}
                     removeMemberAddress={removeMemberAddress} setRemoveMemberAddress={setRemoveMemberAddress} result={result}
-                    setResult={setResult} startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate}/>} />
+                    setResult={setResult} startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate}
+                    tokenAddress={tokenAddress} setTokenAddress={setTokenAddress}/>} />
 
                 </Routes>
 

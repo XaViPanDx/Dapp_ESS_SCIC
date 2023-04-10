@@ -67,7 +67,7 @@ const CreateYourDao = ({daoAddress, setDaoAddress, daoName, setDaoName}) => { //
     if (!oldEvents.includes(lesevents)) {
       setEventValue(lesevents);
       setDaoAddress(lesevents);
-      console.log(lesevents); // Remplacez cette ligne par celle qui imprime les adresses
+      console.log(lesevents); 
     }
   })
   .on("changed", (changed) => console.log(changed))
