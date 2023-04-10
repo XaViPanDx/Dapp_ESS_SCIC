@@ -1,18 +1,24 @@
 import React from 'react';
-import { Button, Text, Box, VStack, Flex, Input, FormControl, FormLabel} from '@chakra-ui/react'; 
+import { Button, Text, Box, VStack, Flex, Input, FormControl, FormLabel, InputGroup,
+  InputLeftAddon, HStack} from '@chakra-ui/react'; 
 import { Link } from 'react-router-dom';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 
 import { useEth } from "../../contexts/EthContext";
+import EthContext from '../../contexts/EthContext';
+import Web3 from "web3";
 
 const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMemberAddress, 
   setDaoMemberAddress, result, setResult, startDate, setStartDate, endDate, setEndDate, tokenAddress, setTokenAddress,
    }) => { //tokenAddress, setTokenAddress removeMemberAddress, setRemoveMemberAddress, votingAddress, setVotingAddress
 
   const {
-    state: { accounts, contract2, txhash, web3,  }, //contract, artifact, artifact2, contract3, contract4
+    state: { accounts, contract2, contract3, txhash, web3 }, //contract, artifact, artifact2, contract3, contract4
   } = useEth();
+
+  //const { state } = useContext(EthContext);
+  //const { contract3 } = state;
   //const [isOwner, setIsOwner] = useState(false);
   //const [inputValue, setInputValue] = useState("");
 
@@ -29,6 +35,10 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [createdTokens, setCreatedTokens] = useState([]);
 
+  const [mintAddress, setMintAddress] = useState("");
+  const [burnTokenId, setBurnTokenId] = useState("");
+  //const [isAddress, setisAddress] = useState(false);
+
   // VOTE
 
   const [createdVotes, setCreatedVotes] = useState([]);
@@ -38,6 +48,40 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
 
   const newDaoInstance = contract2.clone();
   newDaoInstance.options.address = daoAddress;
+
+  // CONTRAT NEWTOKEN
+
+  const newTokenInstance = contract3.clone();
+  newTokenInstance.options.address = contract3.options.address;
+
+  //newTokenInstance.options.address = tokenAddress;
+  const isAddress = (address) => {
+    return Web3.utils.isAddress(address);
+  };
+  
+  async function handleMint() {
+    if (!isAddress(mintAddress)) {
+      alert("L'adresse n'est pas valide.");
+      return;
+    }
+    try {
+      await newTokenInstance.methods.safeMint(mintAddress).send({from: accounts[0]}); //const tx =
+      alert('NFT minté avec succès !');
+    } catch (error) {
+      console.error('Erreur lors du mint de NFT : ', error);
+    }
+  }
+
+  async function handleBurn() {
+    try {
+      await newTokenInstance.methods.burn(burnTokenId).send({from: accounts[0]}); //const tx =
+      alert('NFT burn avec succès !');
+    } catch (error) {
+      console.error('Erreur lors du burn de NFT : ', error);
+    }
+  }
+
+  
 
 
 
@@ -100,7 +144,7 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
       .on('connected', (str) => console.log(str));
   
     return () => subscription.unsubscribe();
-  }, [newDaoInstance, setAddedMembers]);
+  }, []);  //newDaoInstance, setAddedMembers
 
   /*const handleChange = (evt) => {
     setDaoMemberAddress(evt.currentTarget.value);
@@ -151,7 +195,7 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
       .on('connected', (str) => console.log(str));
   
     return () => subscription.unsubscribe();
-  }, [newDaoInstance, setRemovedMembersList]);
+  }, []); //newDaoInstance, setRemovedMembersList
   
 
   // SNAPSHOTRESULT
@@ -203,7 +247,7 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
       .on('connected', (str) => console.log(str));
   
     return () => subscription.unsubscribe();
-  }, [newDaoInstance, setSnapshot]);
+  }, []); //newDaoInstance, setSnapshot
   
   // SETTOKEN
 
@@ -214,9 +258,6 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
     }
 
     try {
-      /*const newTokenInstance = contract3.clone();
-      newTokenInstance.options.address = tokenAddress;*/
-
       await newDaoInstance.methods.createToken(tokenName, tokenSymbol).send({ from: accounts[0] });
 
       alert('Token créé avec succès !');
@@ -264,7 +305,7 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
     }
 
     fetchEvents();
-  }, ); // OU vIDE?? [newDaoInstance, setTokenAddress, txhash, web3.eth]
+  }, []); // OU vIDE?? [newDaoInstance, setTokenAddress, txhash, web3.eth]
 
 
  // SETVOTING
@@ -314,7 +355,7 @@ useEffect(() => {
     }
 
   fetchEvents();
-}, ); //[newDaoInstance, setVotingAddress, txhash, web3.eth]
+}, []); //[newDaoInstance, setVotingAddress, txhash, web3.eth]
 
 
 
@@ -499,11 +540,11 @@ useEffect(() => {
           </Text>
           {createdTokens.map((token, index) => (
             <Text color="teal.500" key={index} mt={2} ml={3}>
-              Token {index + 1}: {tokenName} ({tokenSymbol}) <br/> Adresse : {token.address}
+              Token {index + 1}: {tokenName} ({tokenSymbol}) <br/> Adresse : {token.address} {/*marche plus event tableau dependance*/}
             </Text>
           ))}
           {tokenAddress && (
-            <Text color="teal.500" fontWeight="bold" mt={5} ml={7}>      {/* ENLEVER //////////////////////////////*/}
+            <Text color="teal.500" fontWeight="bold" mt={5} ml={7}>      {/* ENLEVER NON SI PAS EVENT//////////////////////////////*/}
               Adresse du token : {tokenAddress}
             </Text>
           )}
@@ -520,9 +561,54 @@ useEffect(() => {
           {createdVotes.map((vote, index) => (
             <Text color="teal.500" key={index} mt={2} ml={3}>
               Vote {index + 1}: Adresse : {vote.address} <br />
-              Event: {votingContract}                                     {/* ENLEVER //////////////////////////////*/}
+              Event: {votingContract}                                     {/* ENLEVER NON SI PAS EVENT//////////////////////////////*/}
             </Text>
           ))}
+          
+
+          <Box
+      borderWidth={1}
+      borderRadius="lg"
+      p={4}
+      mt={4}
+      textAlign="right"
+      borderColor="gray.200"
+    >
+      <VStack spacing={4}>
+        <Text fontSize="xl">Mint et Burn des Tokens</Text>
+
+        <HStack>
+          <InputGroup>
+            <InputLeftAddon children="Adresse" />
+            <Input
+              type="text"
+              placeholder="Adresse du membre"
+              value={mintAddress}
+              onChange={(e) => setMintAddress(e.target.value)}
+            />
+          </InputGroup>
+          <Button colorScheme="teal" onClick={handleMint}>
+            Mint Token
+          </Button>
+        </HStack>
+
+        <HStack>
+          <InputGroup>
+            <InputLeftAddon children="Token ID" />
+            <Input
+              type="number"
+              placeholder="Token ID à burn"
+              value={burnTokenId}
+              onChange={(e) => setBurnTokenId(e.target.value)}
+            />
+          </InputGroup>
+          <Button colorScheme="red" onClick={handleBurn}>
+            Burn Token
+          </Button>
+        </HStack>
+      </VStack>
+    </Box>
+
         </Box>
       </Flex>
     </div>

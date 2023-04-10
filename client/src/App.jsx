@@ -26,6 +26,7 @@ function App() {
   const [votingAddress, setVotingAddress] = useState([]);
 
   const [isOwner, setIsOwner] = useState(false); //////+++++++++
+  
 
 
   return (
