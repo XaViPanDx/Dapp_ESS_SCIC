@@ -24,12 +24,22 @@ const HomePage = () => {
 
         <Link to="/your-dao">
 
-        <Button colorScheme="teal" variant="solid" size="lg" mr={77} mt={33}>
+        <Button colorScheme="teal" variant="solid" size="lg" mt={33} mr={21}> {/**mr={77} */}
 
               Votre DAO
 
         </Button>
         </Link>
+
+        <Link to="/your-voting">
+
+        <Button colorScheme="teal" variant="solid" size="lg" mr={77} mt={33}>
+
+              Votre espace vote
+
+        </Button>
+        </Link>
+
       </Flex>
 
       <Heading as="h1" fontSize="7xl" color="teal.500" textAlign="left" mb={33} ml={77} mt={77}>
