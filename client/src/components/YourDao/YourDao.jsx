@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Text, Box, VStack, Flex, Input, FormControl, FormLabel} from '@chakra-ui/react'; //Input
+import { Button, Text, Box, VStack, Flex, Input, FormControl, FormLabel} from '@chakra-ui/react'; 
 import { Link } from 'react-router-dom';
 
 import { useState, useEffect } from "react";
@@ -52,7 +52,7 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
       }
     }
     getOwner();
-  }, [accounts, contract2, artifact2, daoAddress]);*/
+  }, [accounts, contract2, artifact2, daoAddress]);*/ // + token et voting address
 
   // ADDMEMBER
 
@@ -318,15 +318,224 @@ useEffect(() => {
 
 
 
-
-  
-  
-
-
-  
-
   return (
-   <div>
+    <div>
+    <Link to="/">
+      <Button colorScheme="teal" variant="outline" size="md" mt={7} ml={7}>
+        Retour à l'accueil
+      </Button>
+    </Link>
+
+    <Text color="teal.500" fontWeight="bold" mt={5} ml={7}>
+      Nom de votre DAO : {daoName}
+      <br />
+      <br />
+      Addresse de votre DAO : {daoAddress}
+    </Text>
+    <Flex
+      direction="row"
+      alignItems="flex-start"
+      justifyContent="flex-start"
+      minHeight="100vh"
+    >
+      {/* Ajouter / Retirer un membre */}
+      <Box mt={7} ml={7} w="25%"  borderWidth="1px"
+        borderColor="green.500"
+        borderRadius="md"
+        p={3}>
+        <Text fontSize="2xl" color="green.700" mb={4}>
+          Ajouter un membre :
+        </Text>
+        <VStack spacing={4} alignItems="flex-start">
+          <input
+            type="text"
+            placeholder="Adresse du membre"
+            value={daoMemberAddress}
+            onChange={(e) => setDaoMemberAddress(e.target.value)}
+            width="75%"
+          />
+          <input
+            type="text"
+            placeholder="Nom du membre"
+            value={daoMemberName}
+            onChange={(e) => setDaoMemberName(e.target.value)}
+            width="75%"
+          />
+        </VStack>
+        <Button colorScheme="teal" type="submit" mt={7} onClick={addMember}>
+          Ajouter un membre
+        </Button>
+        <Text color="teal.500" fontWeight="bold" mt={5}>
+          Liste des membres ajoutés :
+        </Text>
+        {addedMembers.map((member, index) => (
+          <Text color="teal.500" key={index} mt={2} ml={3}>
+            Membre {index + 1}: {member.name} ({member.address})
+          </Text>
+        ))}
+        <Text fontSize="2xl" color="red.700" mb={4} mt={8}>
+          Retirer un membre :
+        </Text>
+        <VStack spacing={4} alignItems="flex-start">
+          <input
+            type="text"
+            placeholder="Adresse du membre"
+            value={removedMembers}
+            onChange={(e) => setRemovedMembers(e.target.value)}
+            width="75%"
+          />
+        </VStack>
+        <Button colorScheme="red" type="submit" mt={7} onClick={removeMember}>
+          Retirer un membre
+        </Button>
+        <Text color="red.500" fontWeight="bold" mt={5}>
+          Liste des membres retirés :
+        </Text>
+        {removedMembersList.map((member, index) => (
+          <Text color="red.500" key={index} mt={2} ml={3}>
+            Membre retiré {index + 1}: {member.address}
+          </Text>
+        ))}
+      </Box>
+
+          {/* Snapshot */}
+
+      <Box mt={7} ml={16} w="25%"
+        borderWidth="1px"
+        borderColor="green.500"
+        borderRadius="md"
+        p={3}>
+          <Text fontSize="2xl" color="green.700" mb={4}>
+            Organisation d'une session de vote :
+          </Text>
+          <form onSubmit={handleSubmit}>
+            <FormControl>
+              <FormLabel htmlFor="result"></FormLabel>
+              <Input
+                id="result"
+                type="text"
+                value={result}
+                onChange={(e) => setResult(e.target.value)}
+                placeholder="Proposition sélectionnée par snapshot"
+                width="75%"
+              />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel htmlFor="startDate">Début du vote:</FormLabel>
+              <Input
+                id="startDate"
+                type="text"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                placeholder="Entrez les détails de début de vote"
+                width="75%"
+              />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel htmlFor="endDate">Fin du vote:</FormLabel>
+              <Input
+                id="endDate"
+                type="text"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                placeholder="Entrez les détails de fin de vote"
+                width="75%"
+              />
+            </FormControl>
+
+            <Button colorScheme="teal" type="submit" mt={4}>
+              Soumettre
+            </Button>
+            <Text color="teal.500" fontWeight="bold" mt={5}>
+              Propositions selectionées et sessions de votes :
+            </Text>
+            {snapshot.map((result, index) => (
+              <Text color="teal.500" key={index} mt={2} ml={3}>
+                Snapshot {index + 1}: {result.result} <br />
+                Début du vote :{result.startDate} <br />
+                Fin du vote : {result.endDate}
+              </Text>
+            ))}
+          </form>
+        </Box>
+
+        {/* Création de token et vote */}
+
+        <Box mt={7} ml={16} w="25%" borderWidth="1px"
+        borderColor="green.500"
+        borderRadius="md"
+        p={3}>
+          <Text fontSize="2xl" color="green.700" mb={4}>
+          Création de token de vote :
+        </Text>
+          <Text mb={3}>Nom du token :</Text>
+          <Input
+            value={tokenName}
+            onChange={(e) => setTokenName(e.target.value)}
+            placeholder="Entrez le nom du token"
+            size="md"
+            mb={3}
+            width="75%"
+          />
+
+          <Text mb={3}>Symbole du token :</Text>
+          <Input
+            value={tokenSymbol}
+            onChange={(e) => setTokenSymbol(e.target.value)}
+            placeholder="Entrez le symbole du token"
+            size="md"
+            mb={3}
+            width="75%"
+          />
+
+          <Button colorScheme="teal" onClick={createToken}>
+            Créer un token
+          </Button>
+
+          <Text color="teal.500" fontWeight="bold" mt={5}>
+            Détails du token crée :
+          </Text>
+          {createdTokens.map((token, index) => (
+            <Text color="teal.500" key={index} mt={2} ml={3}>
+              Token {index + 1}: {tokenName} ({tokenSymbol}) <br/> Adresse : {token.address}
+            </Text>
+          ))}
+          {tokenAddress && (
+            <Text color="teal.500" fontWeight="bold" mt={5} ml={7}>      {/* ENLEVER //////////////////////////////*/}
+              Adresse du token : {tokenAddress}
+            </Text>
+          )}
+          <Text fontSize="2xl" color="green.700" mb={4} mt={8}>
+            Création d'une session de vote :
+          </Text>
+          <Button colorScheme="teal" onClick={createVote}>
+            Créer un vote
+          </Button>
+
+          <Text color="teal.500" fontWeight="bold" mt={5}>
+            Liste des votes créés :
+          </Text>
+          {createdVotes.map((vote, index) => (
+            <Text color="teal.500" key={index} mt={2} ml={3}>
+              Vote {index + 1}: Adresse : {vote.address} <br />
+              Event: {votingContract}                                     {/* ENLEVER //////////////////////////////*/}
+            </Text>
+          ))}
+        </Box>
+      </Flex>
+    </div>
+  
+  );
+};
+
+export default YourDao; 
+
+
+// DER FONCTIONEL OK
+
+/* <div>
     <Link to="/">
       <Button colorScheme="teal" variant="outline" size="md" mt={7} ml={7}>
         Retour à l'accueil
@@ -508,11 +717,7 @@ useEffect(() => {
           </Box>
         </Flex>
       </div>
-  
-  );
-};
-
-export default YourDao; 
+  */
 
 // DERDER TTES FCTION OK /* <div style={{ position: "relative", minHeight: "100vh" }}></div>*/
 
