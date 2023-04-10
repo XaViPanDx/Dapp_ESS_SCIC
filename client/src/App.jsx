@@ -7,6 +7,7 @@ import CreateYourDao from './components/CreateYourDao/CreateYourDao';
 import YourDao from './components/YourDao/YourDao';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
+import YourVoting from './components/YourVoting/YourVoting';
 
 import { useState } from "react";
 
@@ -26,6 +27,8 @@ function App() {
   const [votingAddress, setVotingAddress] = useState([]);
 
   const [isOwner, setIsOwner] = useState(false); //////+++++++++
+
+  const [currentStatus,setCurrentStatus] = useState(0);
   
 
 
@@ -47,7 +50,12 @@ function App() {
                     setDaoMemberName={setDaoMemberName} daoMemberAddress={daoMemberAddress} setDaoMemberAddress={setDaoMemberAddress}
                     removeMemberAddress={removeMemberAddress} setRemoveMemberAddress={setRemoveMemberAddress} result={result}
                     setResult={setResult} startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate}
-                    tokenAddress={tokenAddress} setTokenAddress={setTokenAddress} votingAddress={votingAddress} setVotingAddress={setVotingAddress}  />} />
+                    tokenAddress={tokenAddress} setTokenAddress={setTokenAddress} votingAddress={votingAddress} setVotingAddress={setVotingAddress} 
+                    isOwner={isOwner} setIsOwner={setIsOwner} />} />
+
+                    <Route path="/your-voting" element={<YourVoting isOwner={isOwner} setIsOwner={setIsOwner} tokenAddress={tokenAddress}
+                    daoAddress={daoAddress} result={result} votingAddress={votingAddress} currentStatus={currentStatus}
+                    setCurrentStatus={setCurrentStatus} />} />
 
                 </Routes>
 
