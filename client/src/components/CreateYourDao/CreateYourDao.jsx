@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from "react";
 import { useEth } from "../../contexts/EthContext";
 
-const CreateYourDao = ({daoAddress, setDaoAddress, daoName, setDaoName}) => { // daoAddress ok!!!!
+const CreateYourDao = ({daoAddress, setDaoAddress, daoName, setDaoName, isOwner, setIsOwner}) => { // daoAddress ok!!!!
 
   const {
     state: { accounts, contract, web3, txhash }, //artifact
