@@ -7,7 +7,8 @@ import { useState, useEffect } from "react";
 import { useEth } from "../../contexts/EthContext";
 
 const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMemberAddress, 
-  setDaoMemberAddress, result, setResult, startDate, setStartDate, endDate, setEndDate, tokenAddress, setTokenAddress }) => { //tokenAddress, setTokenAddress removeMemberAddress, setRemoveMemberAddress,
+  setDaoMemberAddress, result, setResult, startDate, setStartDate, endDate, setEndDate, tokenAddress, setTokenAddress,
+   }) => { //tokenAddress, setTokenAddress removeMemberAddress, setRemoveMemberAddress, votingAddress, setVotingAddress
 
   const {
     state: { accounts, contract2, txhash, web3,  }, //contract, artifact, artifact2, contract3, contract4
@@ -27,11 +28,18 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [createdTokens, setCreatedTokens] = useState([]);
+
+  // VOTE
+
+  const [createdVotes, setCreatedVotes] = useState([]);
+  const [votingContract, setVotingContract] = useState([]);
   
   // CONTRAT NEWDAO
 
   const newDaoInstance = contract2.clone();
   newDaoInstance.options.address = daoAddress;
+
+
 
   // CHECK OWNER
 
@@ -256,12 +264,58 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
     }
 
     fetchEvents();
-  },[newDaoInstance, setTokenAddress, txhash, web3.eth] ); // OU vIDE?? , setTokenAddress
+  }, ); // OU vIDE?? [newDaoInstance, setTokenAddress, txhash, web3.eth]
 
 
  // SETVOTING
 
+ async function createVote() {
   
+  try {
+    await newDaoInstance.methods.createVoting().send({ from: accounts[0] });
+    alert('Vote créé avec succès !');
+  } catch (error) {
+    console.error('Erreur lors de la création du vote : ', error);
+  }
+}
+useEffect(() => {
+  if (!newDaoInstance) return;
+  const deployTx =  web3.eth.getTransaction(txhash);
+  const fromBlock = deployTx ? deployTx.blockNumber : "earliest";
+
+  async function fetchEvents() {
+    try {
+      const pastEvents = await newDaoInstance.getPastEvents('VotingCreated', {
+        fromBlock: 0,
+        toBlock: 'latest',
+      });
+
+      const pastVoteCreated = pastEvents.map(event => {
+        return {
+          address: event.returnValues.votingContract,
+        };
+      });
+
+      await newDaoInstance.events.VotingCreated({ fromBlock })
+        .on("data", (event) => {
+        let votingEventAddress = event.returnValues.votingContract;
+        setVotingContract(votingEventAddress);
+        console.log(votingEventAddress);
+        })
+        .on("changed", (changed) => console.log(changed))
+        .on("error", (err) => console.log(err))
+        .on("connected", (str) => console.log(str));
+
+        setCreatedVotes(pastVoteCreated);
+
+      } catch (error) {
+        console.error('Erreur lors de la récupération des événements : ', error);
+      }
+    }
+
+  fetchEvents();
+}, ); //[newDaoInstance, setVotingAddress, txhash, web3.eth]
+
 
 
 
@@ -272,69 +326,84 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
   
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh' }}>
+   <div>
     <Link to="/">
       <Button colorScheme="teal" variant="outline" size="md" mt={7} ml={7}>
         Retour à l'accueil
       </Button>
     </Link>
 
-    
     <Text color="teal.500" fontWeight="bold" mt={5} ml={7}>
       Nom de votre DAO : {daoName}
-      <br /><br />
+      <br />
+      <br />
       Addresse de la DAO : {daoAddress}
     </Text>
-    <Flex direction="row" alignItems="flex-start" justifyContent="flex-start" minHeight="100vh">
-  <Box mt={7} ml={7} w="25%">
-    <Text fontSize="2xl" color="green.700" mb={4}>Ajouter un membre :</Text>
-    <VStack spacing={4} alignItems="flex-start">
-      <input
-        type="text"
-        placeholder="Adresse du membre"
-        value={daoMemberAddress}
-        onChange={(e) => setDaoMemberAddress(e.target.value)}
-        width="30"
-      />
-      <input
-        type="text"
-        placeholder="Nom du membre"
-        value={daoMemberName}
-        onChange={(e) => setDaoMemberName(e.target.value)}
-      />
-    </VStack>
-    <Button colorScheme="teal" type="submit" mt={7} onClick={addMember}>Ajouter un membre</Button>
-    <Text color="teal.500" fontWeight="bold" mt={5}>
-      Liste des membres ajoutés :
-    </Text>
-    {addedMembers.map((member, index) => (
-      <Text color="teal.500" key={index} mt={2} ml={3}>
-        Membre {index + 1}: {member.name} ({member.address})
-      </Text>
-    ))}
-    <Text fontSize="2xl" color="red.700" mb={4} mt={8}>Retirer un membre :</Text>
-          <VStack spacing={4} alignItems="flex-start">
-            <input
-              type="text"
-              placeholder="Adresse du membre"
-              value={removedMembers}
-              onChange={(e) => setRemovedMembers(e.target.value)}
-              width="30"
-            />
-          </VStack>
-          <Button colorScheme="red" type="submit" mt={7} onClick={removeMember}>Retirer un membre</Button>
-          <Text color="red.500" fontWeight="bold" mt={5}>
-            Liste des membres retirés :
+    <Flex
+      direction="row"
+      alignItems="flex-start"
+      justifyContent="flex-start"
+      minHeight="100vh"
+    >
+      <Box mt={7} ml={7} w="25%">
+        <Text fontSize="2xl" color="green.700" mb={4}>
+          Ajouter un membre :
+        </Text>
+        <VStack spacing={4} alignItems="flex-start">
+          <input
+            type="text"
+            placeholder="Adresse du membre"
+            value={daoMemberAddress}
+            onChange={(e) => setDaoMemberAddress(e.target.value)}
+            width="30"
+          />
+          <input
+            type="text"
+            placeholder="Nom du membre"
+            value={daoMemberName}
+            onChange={(e) => setDaoMemberName(e.target.value)}
+          />
+        </VStack>
+        <Button colorScheme="teal" type="submit" mt={7} onClick={addMember}>
+          Ajouter un membre
+        </Button>
+        <Text color="teal.500" fontWeight="bold" mt={5}>
+          Liste des membres ajoutés :
+        </Text>
+        {addedMembers.map((member, index) => (
+          <Text color="teal.500" key={index} mt={2} ml={3}>
+            Membre {index + 1}: {member.name} ({member.address})
           </Text>
-          {removedMembersList.map((member, index) => (
-            <Text color="red.500" key={index} mt={2} ml={3}>
-              Membre retiré {index + 1}: {member.address}
-            </Text>
-          ))}
-    </Box>
-    
+        ))}
+        <Text fontSize="2xl" color="red.700" mb={4} mt={8}>
+          Retirer un membre :
+        </Text>
+        <VStack spacing={4} alignItems="flex-start">
+          <input
+            type="text"
+            placeholder="Adresse du membre"
+            value={removedMembers}
+            onChange={(e) => setRemovedMembers(e.target.value)}
+            width="30"
+          />
+        </VStack>
+        <Button colorScheme="red" type="submit" mt={7} onClick={removeMember}>
+          Retirer un membre
+        </Button>
+        <Text color="red.500" fontWeight="bold" mt={5}>
+          Liste des membres retirés :
+        </Text>
+        {removedMembersList.map((member, index) => (
+          <Text color="red.500" key={index} mt={2} ml={3}>
+            Membre retiré {index + 1}: {member.address}
+          </Text>
+        ))}
+      </Box>
+
       <Box mt={7} ml={16}>
-        <Text fontSize="2xl" color="green.700" mb={4}>Résultats du snapshot :</Text>
+        <Text fontSize="2xl" color="green.700" mb={4}>
+          Résultats du snapshot :
+        </Text>
         <form onSubmit={handleSubmit}>
           <FormControl>
             <FormLabel htmlFor="result"></FormLabel>
@@ -344,92 +413,275 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
               value={result}
               onChange={(e) => setResult(e.target.value)}
               placeholder="Entrez le résultat"
-              width="100%" // Modifier la largeur de l'input ici
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormLabel htmlFor="startDate">Date de début du vote:</FormLabel>
-            <Input
-              id="startDate"
-              type="text"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              placeholder="Entrez la date de début"
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormLabel htmlFor="endDate">Date de fin du vote:</FormLabel>
-            <Input
-              id="endDate"
-              type="text"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder="Entrez la date de fin"
-            />
-          </FormControl>
-
-          <Button colorScheme="teal" type="submit" mt={4}>
-            Soumettre
-          </Button>
-          <Text color="teal.500" fontWeight="bold" mt={5}>
-          Liste des snapshot ajoutés :
-        </Text>
-        {snapshot.map((result, index) => (
-          <Text color="teal.500" key={index} mt={2} ml={3}>
-            Snapshot {index + 1}: {result.result} <br/>
-            Début du vote :{result.startDate}<br/>
-            Fin du vote : {result.endDate}
-          </Text>
-          ))}
-        </form>
-        <Text mb={3}>Nom du token :</Text>
-      <Input
-        value={tokenName}
-        onChange={e => setTokenName(e.target.value)}
-        placeholder="Entrez le nom du token"
-        size="md"
-        mb={3}
-      />
-
-      <Text mb={3}>Symbole du token :</Text>
-      <Input
-        value={tokenSymbol}
-        onChange={e => setTokenSymbol(e.target.value)}
-        placeholder="Entrez le symbole du token"
-        size="md"
-        mb={3}
-      />
-
-      <Button colorScheme="teal" onClick={createToken}>
-        Créer un token
-      </Button>
-
-      <Text color="teal.500" fontWeight="bold" mt={5}>
-        Liste des tokens créés :
-      </Text>
-      {createdTokens.map((token, index) => (
-        <Text color="teal.500" key={index} mt={2} ml={3}>
-          Token {index + 1}: {tokenName} ({tokenSymbol}) - Adresse : {token.address} 
-        </Text>
-      ))}
-      {tokenAddress && (
-  <Text color="teal.500" fontWeight="bold" mt={5} ml={7}>
-    Adresse du token : {tokenAddress}
-  </Text>
-)}
-      </Box>
-    </Flex>
-   
-  </div>
+              width="100%"
+              />
+              </FormControl>
     
-  
+              <FormControl>
+                <FormLabel htmlFor="startDate">Date de début du vote:</FormLabel>
+                <Input
+                  id="startDate"
+                  type="text"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  placeholder="Entrez la date de début"
+                />
+              </FormControl>
+    
+              <FormControl>
+                <FormLabel htmlFor="endDate">Date de fin du vote:</FormLabel>
+                <Input
+                  id="endDate"
+                  type="text"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="Entrez la date de fin"
+                />
+              </FormControl>
+    
+              <Button colorScheme="teal" type="submit" mt={4}>
+                Soumettre
+              </Button>
+              <Text color="teal.500" fontWeight="bold" mt={5}>
+                Liste des snapshot ajoutés :
+              </Text>
+              {snapshot.map((result, index) => (
+                <Text color="teal.500" key={index} mt={2} ml={3}>
+                  Snapshot {index + 1}: {result.result} <br />
+                  Début du vote :{result.startDate} <br />
+                  Fin du vote : {result.endDate}
+                </Text>
+              ))}
+            </form>
+            <Text mb={3}>Nom du token :</Text>
+            <Input
+              value={tokenName}
+              onChange={(e) => setTokenName(e.target.value)}
+              placeholder="Entrez le nom du token"
+              size="md"
+              mb={3}
+            />
+    
+            <Text mb={3}>Symbole du token :</Text>
+            <Input
+              value={tokenSymbol}
+              onChange={(e) => setTokenSymbol(e.target.value)}
+              placeholder="Entrez le symbole du token"
+              size="md"
+              mb={3}
+            />
+    
+            <Button colorScheme="teal" onClick={createToken}>
+              Créer un token
+            </Button>
+    
+            <Text color="teal.500" fontWeight="bold" mt={5}>
+              Liste des tokens créés :
+            </Text>
+            {createdTokens.map((token, index) => (
+              <Text color="teal.500" key={index} mt={2} ml={3}>
+                Token {index + 1}: {tokenName} ({tokenSymbol}) - Adresse : {token.address}
+              </Text>
+            ))}
+            {tokenAddress && (
+              <Text color="teal.500" fontWeight="bold" mt={5} ml={7}>
+                Adresse du token : {tokenAddress}
+              </Text>
+            )}
+    
+            <Text fontSize="2xl" color="green.700" mb={4} mt={8}>
+              Créer un vote :
+            </Text>
+            <Button colorScheme="teal" onClick={createVote}>
+              Créer un vote
+            </Button>
+    
+            <Text color="teal.500" fontWeight="bold" mt={5}>
+              Liste des votes créés :
+            </Text>
+            {createdVotes.map((vote, index) => (
+              <Text color="teal.500" key={index} mt={2} ml={3}>
+                Vote {index + 1}: Adresse : {vote.address} <br />
+                Event: {votingContract}
+              </Text>
+            ))}
+          </Box>
+        </Flex>
+      </div>
   
   );
 };
 
 export default YourDao; 
+
+// DERDER TTES FCTION OK /* <div style={{ position: "relative", minHeight: "100vh" }}></div>*/
+
+/*<div style={{ position: 'relative', minHeight: '100vh' }}>
+<Link to="/">
+  <Button colorScheme="teal" variant="outline" size="md" mt={7} ml={7}>
+    Retour à l'accueil
+  </Button>
+</Link>
+
+
+<Text color="teal.500" fontWeight="bold" mt={5} ml={7}>
+  Nom de votre DAO : {daoName}
+  <br /><br />
+  Addresse de la DAO : {daoAddress}
+</Text>
+<Flex direction="row" alignItems="flex-start" justifyContent="flex-start" minHeight="100vh">
+<Box mt={7} ml={7} w="25%">
+<Text fontSize="2xl" color="green.700" mb={4}>Ajouter un membre :</Text>
+<VStack spacing={4} alignItems="flex-start">
+  <input
+    type="text"
+    placeholder="Adresse du membre"
+    value={daoMemberAddress}
+    onChange={(e) => setDaoMemberAddress(e.target.value)}
+    width="30"
+  />
+  <input
+    type="text"
+    placeholder="Nom du membre"
+    value={daoMemberName}
+    onChange={(e) => setDaoMemberName(e.target.value)}
+  />
+</VStack>
+<Button colorScheme="teal" type="submit" mt={7} onClick={addMember}>Ajouter un membre</Button>
+<Text color="teal.500" fontWeight="bold" mt={5}>
+  Liste des membres ajoutés :
+</Text>
+{addedMembers.map((member, index) => (
+  <Text color="teal.500" key={index} mt={2} ml={3}>
+    Membre {index + 1}: {member.name} ({member.address})
+  </Text>
+))}
+<Text fontSize="2xl" color="red.700" mb={4} mt={8}>Retirer un membre :</Text>
+      <VStack spacing={4} alignItems="flex-start">
+        <input
+          type="text"
+          placeholder="Adresse du membre"
+          value={removedMembers}
+          onChange={(e) => setRemovedMembers(e.target.value)}
+          width="30"
+        />
+      </VStack>
+      <Button colorScheme="red" type="submit" mt={7} onClick={removeMember}>Retirer un membre</Button>
+      <Text color="red.500" fontWeight="bold" mt={5}>
+        Liste des membres retirés :
+      </Text>
+      {removedMembersList.map((member, index) => (
+        <Text color="red.500" key={index} mt={2} ml={3}>
+          Membre retiré {index + 1}: {member.address}
+        </Text>
+      ))}
+</Box>
+
+  <Box mt={7} ml={16}>
+    <Text fontSize="2xl" color="green.700" mb={4}>Résultats du snapshot :</Text>
+    <form onSubmit={handleSubmit}>
+      <FormControl>
+        <FormLabel htmlFor="result"></FormLabel>
+        <Input
+          id="result"
+          type="text"
+          value={result}
+          onChange={(e) => setResult(e.target.value)}
+          placeholder="Entrez le résultat"
+          width="100%" // Modifier la largeur de l'input ici
+        />
+      </FormControl>
+
+      <FormControl>
+        <FormLabel htmlFor="startDate">Date de début du vote:</FormLabel>
+        <Input
+          id="startDate"
+          type="text"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          placeholder="Entrez la date de début"
+        />
+      </FormControl>
+
+      <FormControl>
+        <FormLabel htmlFor="endDate">Date de fin du vote:</FormLabel>
+        <Input
+          id="endDate"
+          type="text"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          placeholder="Entrez la date de fin"
+        />
+      </FormControl>
+
+      <Button colorScheme="teal" type="submit" mt={4}>
+        Soumettre
+      </Button>
+      <Text color="teal.500" fontWeight="bold" mt={5}>
+      Liste des snapshot ajoutés :
+    </Text>
+    {snapshot.map((result, index) => (
+      <Text color="teal.500" key={index} mt={2} ml={3}>
+        Snapshot {index + 1}: {result.result} <br/>
+        Début du vote :{result.startDate}<br/>
+        Fin du vote : {result.endDate}
+      </Text>
+      ))}
+    </form>
+    <Text mb={3}>Nom du token :</Text>
+  <Input
+    value={tokenName}
+    onChange={e => setTokenName(e.target.value)}
+    placeholder="Entrez le nom du token"
+    size="md"
+    mb={3}
+  />
+
+  <Text mb={3}>Symbole du token :</Text>
+  <Input
+    value={tokenSymbol}
+    onChange={e => setTokenSymbol(e.target.value)}
+    placeholder="Entrez le symbole du token"
+    size="md"
+    mb={3}
+  />
+
+  <Button colorScheme="teal" onClick={createToken}>
+    Créer un token
+  </Button>
+
+  <Text color="teal.500" fontWeight="bold" mt={5}>
+    Liste des tokens créés :
+  </Text>
+  {createdTokens.map((token, index) => (
+    <Text color="teal.500" key={index} mt={2} ml={3}>
+      Token {index + 1}: {tokenName} ({tokenSymbol}) - Adresse : {token.address} 
+    </Text>
+  ))}
+  {tokenAddress && (
+<Text color="teal.500" fontWeight="bold" mt={5} ml={7}>
+Adresse du token : {tokenAddress}
+</Text>
+)}
+
+<Text fontSize="2xl" color="green.700" mb={4} mt={8}>Créer un vote :</Text>
+<Button colorScheme="teal" onClick={createVote}>
+Créer un vote
+</Button>
+
+<Text color="teal.500" fontWeight="bold" mt={5}>
+Liste des votes créés :
+</Text>
+{createdVotes.map((vote, index) => (
+<Text color="teal.500" key={index} mt={2} ml={3}>
+Vote {index + 1}: Addresse :{vote.address} <br/>
+Event:{votingAddress} 
+</Text>
+))}
+  </Box>
+</Flex>
+
+</div>*/
 
 // DERNIERS CHANGEMENTS
 
