@@ -3,10 +3,10 @@ import { Button, Text, Box, VStack, Flex, Input, FormControl, FormLabel, InputGr
   InputLeftAddon, HStack} from '@chakra-ui/react'; 
 import { Link } from 'react-router-dom';
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react"; //, useContext
 
 import { useEth } from "../../contexts/EthContext";
-import EthContext from '../../contexts/EthContext';
+//import EthContext from '../../contexts/EthContext';
 import Web3 from "web3";
 
 const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMemberAddress, 
@@ -200,7 +200,7 @@ const YourDao = ({daoAddress, daoName, daoMemberName, setDaoMemberName, daoMembe
 
   // SNAPSHOTRESULT
 
-  const handleSubmit = async (event) => {
+  const handleSnap = async (event) => {
     event.preventDefault();
     try {
       await newDaoInstance.methods.snapshotResult(result, startDate, endDate).send({from: accounts[0]}); //const tx =
@@ -449,9 +449,9 @@ useEffect(() => {
           <Text fontSize="2xl" color="green.700" mb={4}>
             Organisation d'une session de vote :
           </Text>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSnap}>
             <FormControl>
-              <FormLabel htmlFor="result"></FormLabel>
+              <FormLabel htmlFor="result">Proposition selectionnée</FormLabel>
               <Input
                 id="result"
                 type="text"
@@ -532,7 +532,7 @@ useEffect(() => {
           />
 
           <Button colorScheme="teal" onClick={createToken}>
-            Créer un token
+            Créer un token de vote
           </Button>
 
           <Text color="teal.500" fontWeight="bold" mt={5}>
@@ -552,7 +552,7 @@ useEffect(() => {
             Création d'une session de vote :
           </Text>
           <Button colorScheme="teal" onClick={createVote}>
-            Créer un vote
+            Créer une session de vote
           </Button>
 
           <Text color="teal.500" fontWeight="bold" mt={5}>
@@ -575,7 +575,7 @@ useEffect(() => {
       borderColor="gray.200"
     >
       <VStack spacing={4}>
-        <Text fontSize="xl">Mint et Burn des Tokens</Text>
+        <Text fontSize="xl">Gestion des Tokens de vote</Text>
 
         <HStack>
           <InputGroup>
@@ -588,22 +588,22 @@ useEffect(() => {
             />
           </InputGroup>
           <Button colorScheme="teal" onClick={handleMint}>
-            Mint Token
+            Minter
           </Button>
         </HStack>
 
         <HStack>
           <InputGroup>
-            <InputLeftAddon children="Token ID" />
+            <InputLeftAddon children="Token ID"  />
             <Input
               type="number"
-              placeholder="Token ID à burn"
+              placeholder="Token ID à brûler"
               value={burnTokenId}
               onChange={(e) => setBurnTokenId(e.target.value)}
             />
           </InputGroup>
           <Button colorScheme="red" onClick={handleBurn}>
-            Burn Token
+            Brûler
           </Button>
         </HStack>
       </VStack>
